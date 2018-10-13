@@ -9,6 +9,13 @@ if [ -z $1 ] ; then
 	exit 1
 fi
 
+# testing the existence of the user
+exist=`cat /etc/passwd | cut -d ":" -f 1 | grep $1 `
+if [ -z $exist ] ; then
+	echo "the name you provided doesn't seem to be used."
+	exit 1
+fi
+
 # block the account, close every active services for him
 # delete the user account and its home folder
 passwd -l $1 
@@ -20,6 +27,7 @@ if [ -d "/home/$1" ] ; then
 	rm -frv /home/$1
 fi
 
+# then we say goodbye to good ol' friend
 echo ""
 echo "$1 has successfully been removed from the surface of your drive :("
 echo "bye $1 !"
