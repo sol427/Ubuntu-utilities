@@ -1,0 +1,49 @@
+#!/bin/bash
+# This scripts creates a user that can only connect to the server via SFTP. 
+# The home directory associated with the account is chrooted so that the user
+# can't access anything else than his account. The user can't access the command line.
+# First parameter is the name of the user.
+
+if [ -z $1 ] ; then
+	echo "You must enter a name for the user as first parameter."
+	exit 1
+fi
+
+adduser $1
+
+# adding settings for the account in the ssh config file
+echo "" >> /etc/ssh/sshd_config
+echo "Match user $1" >> /etc/ssh/sshd_config
+echo "	ChrootDirectory /home/$1" >> /etc/ssh/sshd_config
+echo "	ForceCommand internal-sftp" >> /etc/ssh/sshd_config
+echo "	AllowTCPForwarding no" >> /etc/ssh/sshd_config
+service ssh restart
+
+# giving root access to the user directory
+# then creating a directory inside for $1
+# then block shell access for $1
+chown root:root /home/$1
+mkdir /home/$1/$1
+chown $1:$1 /home/$1/$1
+chmod -R 755 /home/$1/$1
+chsh $1 -s /bin/true
+
+# deleting the unneeded files and directories in $1's directory
+#rm -rf /home/$1/logs/
+rm -rf /home/$1/public_html
+rm -f /home/$1/examples.desktop
+
+echo ""
+echo "------------------------------------------------------------"
+echo "                        Welcome $1 !                      "
+echo ""
+echo "Don't forget to authorize $1 to connect himself via"
+echo "SSH in the /etc/ssh/sshd_config file, and to reload"
+echo "the configuration with : service ssh reload"
+echo ""
+
+ls -l /home
+echo "------------------------------------------------------------"
+echo ""
+
+service ssh restart

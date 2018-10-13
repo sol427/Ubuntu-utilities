@@ -1,0 +1,8 @@
+#!/bin/sh
+# this script displays the disk usage of the home directories and /var/www
+
+du -hs /home
+for dir in /home/* ; do
+	du -hs $dir
+done
+du -hs /var/www

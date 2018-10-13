@@ -1,0 +1,25 @@
+#!/bin/bash
+# this script forces the deletion of a user acount
+# must be executed as root
+
+# $1 = name of the user to delete
+
+if [ -z $1 ] ; then
+	echo "you must enter the name of a user as first parameter"
+	exit 1
+fi
+
+# block the account, close every active services for fim
+# delete the user account and its home folder
+passwd -l $1 
+killall -KILL -u $1 
+userdel -r $1 
+
+# if home isn't removed, we force the deletion of the directory
+if [ -d "/home/$1" ] ; then
+	rm -frv /home/$1
+fi
+
+echo ""
+echo "$1 has successfully been removed from the surface of your drive :("
+echo "bye $1 !"
