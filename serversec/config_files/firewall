@@ -1,0 +1,92 @@
+#!/bin/bash
+
+### BEGIN INIT INFO
+# Provides:          firewall
+# Required-Start:    $remote_fs $syslog
+# Required-Stop:     $remote_fs $syslog
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: update iptables rules
+# Description:       basic configuration for a web and mail server
+### END INIT INFO
+
+# flush potential previous rules :
+iptables -t filter -F
+iptables -t filter -X
+
+# authorize already existing connections and loopback : 
+iptables -A INPUT -m state --state RELATED,ESTABLISHED -j ACCEPT
+iptables -A OUTPUT -m state --state RELATED,ESTABLISHED -j ACCEPT
+iptables -t filter -A INPUT -i lo -j ACCEPT
+iptables -t filter -A OUTPUT -o lo -j ACCEPT
+
+# block the traffic by defaultc :
+iptables -t filter -P INPUT DROP
+iptables -t filter -P FORWARD DROP
+iptables -t filter -P OUTPUT DROP
+
+# authorize already existing connections and loopback : 
+iptables -A INPUT -m state --state RELATED,ESTABLISHED -j ACCEPT
+iptables -A OUTPUT -m state --state RELATED,ESTABLISHED -j ACCEPT
+iptables -t filter -A INPUT -i lo -j ACCEPT
+iptables -t filter -A OUTPUT -o lo -j ACCEPT
+
+# open useful ports and authorize ping : 
+
+# ping
+iptables -t filter -A OUTPUT -p icmp -j ACCEPT
+iptables -t filter -A INPUT -p icmp -j ACCEPT
+
+# 80 and 443 : HTTP and HTTPS
+iptables -t filter -A OUTPUT -p tcp --dport 80 -j ACCEPT
+iptables -t filter -A INPUT -p tcp --dport 80 -j ACCEPT
+iptables -t filter -A OUTPUT -p tcp --dport 443 -j ACCEPT
+iptables -t filter -A INPUT -p tcp --dport 443 -j ACCEPT
+iptables -t filter -A INPUT -p tcp --dport 8443 -j ACCEPT
+
+# 22 : SSH
+iptables -t filter -A OUTPUT -p tcp --dport 22 -j ACCEPT
+iptables -t filter -A INPUT -p tcp --dport 22 -j ACCEPT
+
+# 20 and 21 : FTP
+iptables -t filter -A OUTPUT -p tcp --dport 20 -j ACCEPT
+iptables -t filter -A INPUT -p tcp --dport 20 -j ACCEPT
+iptables -t filter -A OUTPUT -p tcp --dport 21 -j ACCEPT
+iptables -t filter -A INPUT -p tcp --dport 21 -j ACCEPT
+
+# 53 : DNS
+iptables -t filter -A OUTPUT -p tcp --dport 53 -j ACCEPT 
+iptables -t filter -A OUTPUT -p udp --dport 53 -j ACCEPT 
+iptables -t filter -A INPUT -p tcp --dport 53 -j ACCEPT 
+iptables -t filter -A INPUT -p udp --dport 53 -j ACCEPT
+
+# 25 : smtp (mail)
+iptables -t filter -A OUTPUT -p tcp --dport 25 -j ACCEPT
+iptables -t filter -A INPUT -p tcp --dport 25 -j ACCEPT
+
+# 110 : POP3 (mail)
+iptables -t filter -A OUTPUT -p tcp --dport 110 -j ACCEPT
+iptables -t filter -A INPUT -p tcp --dport 110 -j ACCEPT
+
+# 143 : IMAP (mail)
+iptables -t filter -A OUTPUT -p tcp --dport 143 -j ACCEPT
+iptables -t filter -A INPUT -p tcp --dport 143 -j ACCEPT
+
+# 123 : NTP (network time protocol)
+iptables -A OUTPUT -p udp --sport 123 -j ACCEPT 
+iptables -A OUTPUT -p udp --dport 123 -j ACCEPT
+iptables -A INPUT -p udp --sport 123 -j ACCEPT 
+iptables -A INPUT -p udp --dport 123 -j ACCEPT
+
+# block flooding, service denial and port sacning : 
+iptables -A FORWARD -p tcp --syn -m limit --limit 1/second -j ACCEPT
+iptables -A FORWARD -p udp -m limit --limit 1/second -j ACCEPT
+iptables -A FORWARD -p icmp --icmp-type echo-request -m limit --limit 1/second -j ACCEPT
+iptables -A FORWARD -p tcp --tcp-flags SYN,ACK,FIN,RST RST -m limit --limit 1/s -j ACCEPT
+
+# block SSH brute-force attacks
+iptables -N SSHATTACK
+iptables -A SSHATTACK -j LOG --log-prefix "Possible SSH attack! " --log-level 7
+iptables -A SSHATTACK -j DROP
+iptables -A INPUT -i eth0 -p tcp -m state --dport 22 --state NEW -m recent --set
+iptables -A INPUT -i eth0 -p tcp -m state --dport 22 --state NEW -m recent --update --seconds 120 --hitcount 4 -j SSHATTACK
