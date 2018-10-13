@@ -8,7 +8,7 @@ Use :
    
 --- fail2ban-allstatus ---  
 This really simple script displays the status of all the enabled jails in fail2ban.  
-Use : 
+Use :  
  sudo fail2ban-allstatus  
    
 --- newborn ---  
@@ -17,6 +17,6 @@ Use :
  sudo newborn your_user  
   
 --- killuser ---  
-This script forces the deletion of an account, and removes the home folder associated even if it doesn't belong to the user. 
+This script forces the deletion of an account, and removes the home folder associated even if it doesn't belong to the user.  
 Use :  
  sudo killuser your_user  
