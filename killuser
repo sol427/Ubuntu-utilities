@@ -9,7 +9,7 @@ if [ -z $1 ] ; then
 	exit 1
 fi
 
-# block the account, close every active services for fim
+# block the account, close every active services for him
 # delete the user account and its home folder
 passwd -l $1 
 killall -KILL -u $1 
